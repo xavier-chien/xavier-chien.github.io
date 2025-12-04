@@ -10,15 +10,13 @@ description: Bookmark this to keep an eye on my project updates!
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>極簡待辦清單 (Local Storage)</title>
   
-  <!-- 引入 Tailwind CSS (基本佈局用) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入 React, ReactDOM, 和 Babel -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <style>
-    /* 移除字體設定，使用瀏覽器預設字體 */
+
     body {
       min-height: 100vh;
     }
@@ -30,13 +28,8 @@ description: Bookmark this to keep an eye on my project updates!
 
 <script type="text/babel">
   const { useState, useEffect, useCallback } = React;
-  // 引入 Lucide icons (圖標 - 這是功能的一部分，用於標記和刪除)
   const { ListChecks, Plus, Trash2, CheckCircle, Circle } = window['lucide']; 
-
-  // Local Storage Key，用於儲存待辦事項列表
   const LOCAL_STORAGE_KEY = 'simpleTodoListTasks';
-
-  // --- 輔助函數：處理 Local Storage 讀寫 ---
   const getTodosFromStorage = () => {
     try {
       const savedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -55,7 +48,6 @@ description: Bookmark this to keep an eye on my project updates!
     }
   };
 
-  // --- Todo 列表項目組件 (極簡樣式) ---
   const TodoItem = React.memo(({ todo, onToggle, onDelete }) => (
     <div className={`flex items-center p-3 border border-gray-300 rounded mb-2 
                     ${todo.completed ? 'bg-gray-200' : 'bg-white'}`}>
@@ -89,17 +81,14 @@ description: Bookmark this to keep an eye on my project updates!
     </div>
   ));
 
-  // --- 應用程式主組件 ---
   const App = () => {
     const [todos, setTodos] = useState(getTodosFromStorage);
     const [newTodoText, setNewTodoText] = useState('');
 
-    // 數據同步：當 todos 陣列改變時，自動將新值寫入 Local Storage
     useEffect(() => {
       saveTodosToStorage(todos);
     }, [todos]); 
 
-    // 處理新增待辦事項
     const handleAddTodo = useCallback((e) => {
       e.preventDefault();
       const trimmedText = newTodoText.trim();
@@ -115,7 +104,6 @@ description: Bookmark this to keep an eye on my project updates!
       setNewTodoText('');
     }, [newTodoText]);
 
-    // 處理切換完成狀態
     const handleToggleTodo = useCallback((id) => {
       setTodos(prevTodos => 
         prevTodos.map(todo => 
@@ -124,7 +112,6 @@ description: Bookmark this to keep an eye on my project updates!
       );
     }, []);
 
-    // 處理刪除待辦事項
     const handleDeleteTodo = useCallback((id) => {
       setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
     }, []);
@@ -184,7 +171,6 @@ description: Bookmark this to keep an eye on my project updates!
     );
   };
 
-  // 渲染主 APP
   window.onload = () => {
     // 確保 Lucide 圖標庫已載入
     if (window['lucide']) {
