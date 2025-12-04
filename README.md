@@ -8,30 +8,35 @@ description: Bookmark this to keep an eye on my project updates!
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>待辦清單 (Todo List) - Local Storage 版</title>
+  <title>極簡待辦清單 (Local Storage)</title>
   
+  <!-- 引入 Tailwind CSS (基本佈局用) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 React, ReactDOM, 和 Babel -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    /* 移除字體設定，使用瀏覽器預設字體 */
     body {
-      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
     }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100">
 
 <div id="root"></div>
 
 <script type="text/babel">
   const { useState, useEffect, useCallback } = React;
+  // 引入 Lucide icons (圖標 - 這是功能的一部分，用於標記和刪除)
   const { ListChecks, Plus, Trash2, CheckCircle, Circle } = window['lucide']; 
-  const LOCAL_STORAGE_KEY = 'todoListAppTasks';
-  
+
+  // Local Storage Key，用於儲存待辦事項列表
+  const LOCAL_STORAGE_KEY = 'simpleTodoListTasks';
+
+  // --- 輔助函數：處理 Local Storage 讀寫 ---
   const getTodosFromStorage = () => {
     try {
       const savedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -45,34 +50,38 @@ description: Bookmark this to keep an eye on my project updates!
   const saveTodosToStorage = (todos) => {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
-      console.log(`待辦清單已儲存。總數: ${todos.length}`);
     } catch (error) {
       console.error("寫入 Local Storage 失敗:", error);
     }
   };
 
+  // --- Todo 列表項目組件 (極簡樣式) ---
   const TodoItem = React.memo(({ todo, onToggle, onDelete }) => (
-    <div className={`flex items-center p-3 sm:p-4 rounded-lg shadow-sm mb-3 transition duration-200 ease-in-out border 
-                    ${todo.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:shadow-md'}`}>
+    <div className={`flex items-center p-3 border border-gray-300 rounded mb-2 
+                    ${todo.completed ? 'bg-gray-200' : 'bg-white'}`}>
       
+      {/* 標記完成按鈕 */}
       <button 
         onClick={() => onToggle(todo.id)}
-        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-indigo-600 transition duration-150 mr-3 flex-shrink-0"
+        className="w-6 h-6 flex items-center justify-center text-gray-500 mr-3 flex-shrink-0"
         aria-label={todo.completed ? '標記為未完成' : '標記為完成'}
       >
         {todo.completed 
-          ? <CheckCircle className="w-6 h-6 text-green-500 fill-green-500" /> 
-          : <Circle className="w-6 h-6" />
+          ? <CheckCircle className="w-5 h-5 text-green-600" /> 
+          : <Circle className="w-5 h-5" />
         }
       </button>
-      <span className={`flex-grow text-lg sm:text-xl font-medium break-words
-                       ${todo.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+
+      {/* 任務文字 */}
+      <span className={`flex-grow text-lg break-words
+                       ${todo.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
         {todo.text}
       </span>
 
+      {/* 刪除按鈕 */}
       <button 
         onClick={() => onDelete(todo.id)}
-        className="ml-4 p-2 rounded-full text-red-400 hover:bg-red-100 hover:text-red-600 transition duration-150 flex-shrink-0"
+        className="ml-4 p-1 text-red-500 hover:text-red-700 flex-shrink-0"
         aria-label="刪除任務"
       >
         <Trash2 className="w-5 h-5" />
@@ -80,31 +89,33 @@ description: Bookmark this to keep an eye on my project updates!
     </div>
   ));
 
+  // --- 應用程式主組件 ---
   const App = () => {
     const [todos, setTodos] = useState(getTodosFromStorage);
     const [newTodoText, setNewTodoText] = useState('');
 
+    // 數據同步：當 todos 陣列改變時，自動將新值寫入 Local Storage
     useEffect(() => {
       saveTodosToStorage(todos);
     }, [todos]); 
 
-
+    // 處理新增待辦事項
     const handleAddTodo = useCallback((e) => {
       e.preventDefault();
       const trimmedText = newTodoText.trim();
       if (!trimmedText) return;
 
       const newTodo = {
-
         id: Date.now(), 
         text: trimmedText,
         completed: false,
       };
 
-      setTodos(prevTodos => [newTodo, ...prevTodos]); // 新的放前面
-      setNewTodoText(''); // 清空輸入欄
+      setTodos(prevTodos => [newTodo, ...prevTodos]);
+      setNewTodoText('');
     }, [newTodoText]);
 
+    // 處理切換完成狀態
     const handleToggleTodo = useCallback((id) => {
       setTodos(prevTodos => 
         prevTodos.map(todo => 
@@ -113,55 +124,34 @@ description: Bookmark this to keep an eye on my project updates!
       );
     }, []);
 
+    // 處理刪除待辦事項
     const handleDeleteTodo = useCallback((id) => {
       setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
     }, []);
 
-    const totalTasks = todos.length;
-    const completedTasks = todos.filter(t => t.completed).length;
-
     return (
-      <div className="min-h-screen flex flex-col items-center justify-start py-8 px-4">
-        <div className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl p-6 md:p-10 border-t-8 border-indigo-600">
+      <div className="flex flex-col items-center p-4">
+        <div className="w-full max-w-xl bg-white p-6 rounded-lg border border-gray-300">
           
-          {/* 標題與統計區 */}
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-center text-indigo-700 mb-2">
-            <ListChecks className="inline w-8 h-8 mr-2 text-indigo-500" />
-            個人待辦清單
+          {/* 標題區 */}
+          <h1 className="text-2xl font-bold text-center text-gray-800 mb-6 flex items-center justify-center">
+            <ListChecks className="w-6 h-6 mr-2 text-gray-600" />
+            待辦清單 (Todo List)
           </h1>
-          <p className="text-center text-gray-500 mb-6">
-            您專屬的純前端任務管理器 (Local Storage 持久化)
-          </p>
-          
-          {/* 統計面板 */}
-          <div className="bg-indigo-50 p-4 rounded-lg mb-8 shadow-inner flex justify-around text-center">
-            <div>
-              <p className="text-2xl font-bold text-indigo-800">{totalTasks}</p>
-              <p className="text-sm text-gray-600">總任務數</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">{completedTasks}</p>
-              <p className="text-sm text-gray-600">已完成</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-600">{totalTasks - completedTasks}</p>
-              <p className="text-sm text-gray-600">待辦中</p>
-            </div>
-          </div>
 
           {/* 新增任務表單 */}
-          <form onSubmit={handleAddTodo} className="flex space-x-2 mb-8">
+          <form onSubmit={handleAddTodo} className="flex space-x-2 mb-6">
             <input
               type="text"
               value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
               placeholder="輸入新的待辦事項..."
-              className="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-gray-700 transition duration-150"
+              className="flex-grow p-2 border border-gray-400 rounded focus:outline-none focus:border-blue-500"
               aria-label="新的待辦事項輸入"
             />
             <button
               type="submit"
-              className="p-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition duration-200 transform hover:scale-105 flex items-center justify-center"
+              className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
               aria-label="新增任務"
             >
               <Plus className="w-6 h-6" />
@@ -171,18 +161,20 @@ description: Bookmark this to keep an eye on my project updates!
           {/* 待辦事項列表 */}
           <div className="space-y-3">
             {todos.length > 0 ? (
-              todos.map(todo => (
-                <TodoItem 
-                  key={todo.id} 
-                  todo={todo} 
-                  onToggle={handleToggleTodo} 
-                  onDelete={handleDeleteTodo} 
-                />
-              ))
+              // 使用基本的 div 包裹列表，無額外樣式
+              <div>
+                {todos.map(todo => (
+                  <TodoItem 
+                    key={todo.id} 
+                    todo={todo} 
+                    onToggle={handleToggleTodo} 
+                    onDelete={handleDeleteTodo} 
+                  />
+                ))}
+              </div>
             ) : (
-              <div className="text-center p-10 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <p className="text-lg text-gray-500 font-medium">🎉 恭喜您，目前沒有任何待辦事項！</p>
-                <p className="text-sm text-gray-400 mt-2">在上方輸入框中新增您的第一個任務吧。</p>
+              <div className="text-center p-4 bg-gray-50 border border-dashed border-gray-300 rounded">
+                <p className="text-gray-500">目前沒有任何任務。</p>
               </div>
             )}
           </div>
@@ -192,7 +184,9 @@ description: Bookmark this to keep an eye on my project updates!
     );
   };
 
+  // 渲染主 APP
   window.onload = () => {
+    // 確保 Lucide 圖標庫已載入
     if (window['lucide']) {
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     } else {
@@ -201,7 +195,7 @@ description: Bookmark this to keep an eye on my project updates!
   };
 </script>
 
-<!-- Lucide Icons 載入 (用於 React 組件) -->
+<!-- Lucide Icons 載入 -->
 <script src="https://unpkg.com/lucide@latest"></script>
 
 </body>
